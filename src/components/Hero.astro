@@ -6,15 +6,28 @@ import { site, areaLabel } from '../lib/site';
 <section class="relative isolate flex min-h-[100svh] items-center overflow-hidden">
   <!-- Background image with dark fallback gradient -->
   <div class="absolute inset-0 -z-10 bg-[radial-gradient(120%_120%_at_70%_20%,#1c1c1c_0%,#0a0a0a_60%)]">
+    <!-- Fallback image (mobile data savers, reduced motion, no-video browsers) -->
     <img
       src="/images/hero.jpg"
       alt="Freshly detailed glossy black luxury car with water beading and golden light"
-      class="h-full w-full object-cover opacity-60"
+      class="absolute inset-0 h-full w-full object-cover opacity-60"
       width="1600"
       height="894"
       fetchpriority="high"
       decoding="async"
     />
+    <!-- Background video: slow orbit of a luxury car being foamed -->
+    <video
+      class="absolute inset-0 h-full w-full object-cover opacity-60 motion-reduce:hidden"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      poster="/images/hero.jpg"
+    >
+      <source src="/videos/hero.mp4" type="video/mp4" />
+    </video>
     <div class="absolute inset-0 bg-gradient-to-r from-bg via-bg/80 to-bg/20"></div>
     <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-bg/40"></div>
   </div>
