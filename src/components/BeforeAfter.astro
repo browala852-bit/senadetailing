@@ -1,0 +1,66 @@
+---
+import Icon from './Icon.astro';
+import { waDefault } from '../lib/site';
+---
+<section id="results" class="scroll-mt-24 py-20 md:py-28">
+  <div class="mx-auto max-w-7xl px-6 md:px-10">
+    <div class="reveal mx-auto max-w-2xl text-center">
+      <p class="text-xs font-semibold uppercase tracking-[0.22em] text-gold">Real Results</p>
+      <h2 class="mt-4 font-display text-[clamp(2rem,4.5vw,3.25rem)] font-bold leading-tight">
+        Before & <span class="text-gold-gradient">After</span>
+      </h2>
+      <p class="mt-4 text-lg leading-relaxed text-muted">
+        Real work on a real client's Mercedes-Benz. Drag the slider to see it.
+      </p>
+    </div>
+
+    <div class="reveal mx-auto mt-12 max-w-md">
+      <div
+        id="baWidget"
+        class="ba relative aspect-[3/4] w-full touch-none select-none overflow-hidden rounded-2xl border border-white/10"
+        style="--pos:50%"
+      >
+        <img src="/images/real-after.jpg" alt="Mercedes-Benz interior after a full Sena detail — spotless" class="absolute inset-0 h-full w-full object-cover" width="900" height="1200" loading="lazy" decoding="async" />
+        <img id="baBefore" src="/images/real-before.jpg" alt="Mercedes-Benz interior before detailing — heavily soiled" class="absolute inset-0 h-full w-full object-cover" style="clip-path:inset(0 50% 0 0)" width="900" height="1200" loading="lazy" decoding="async" />
+
+        <span class="pointer-events-none absolute left-3 top-3 rounded-full bg-bg/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-ink backdrop-blur-sm">Before</span>
+        <span class="pointer-events-none absolute right-3 top-3 rounded-full bg-gold-gradient px-3 py-1 text-xs font-semibold uppercase tracking-wider text-bg">After</span>
+
+        <!-- Divider + handle -->
+        <div id="baHandle" class="pointer-events-none absolute inset-y-0 z-10 w-0.5 -translate-x-1/2 bg-gold" style="left:50%">
+          <span class="absolute top-1/2 left-1/2 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gold-gradient text-bg shadow-lg">
+            <Icon name="arrowRight" size={18} class="-mr-1" />
+            <Icon name="arrowRight" size={18} class="-ml-1 rotate-180" />
+          </span>
+        </div>
+
+        <!-- Accessible control on top -->
+        <input id="baRange" type="range" min="0" max="100" value="50" step="0.1"
+          aria-label="Reveal before and after"
+          class="absolute inset-0 z-20 h-full w-full cursor-ew-resize opacity-0" />
+      </div>
+
+      <div class="mt-8 text-center">
+        <a href={waDefault} target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full bg-gold-gradient px-7 py-4 text-base font-semibold text-bg transition-transform hover:brightness-110">
+          <Icon name="sparkles" size={20} /> Get Results Like This
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const widget = document.getElementById('baWidget');
+  const range = document.getElementById('baRange') as HTMLInputElement | null;
+  const before = document.getElementById('baBefore');
+  const handle = document.getElementById('baHandle');
+
+  function setPos(v: number) {
+    const pos = Math.max(0, Math.min(100, v));
+    widget?.style.setProperty('--pos', pos + '%');
+    if (before) before.style.clipPath = `inset(0 ${100 - pos}% 0 0)`;
+    if (handle) handle.style.left = pos + '%';
+  }
+
+  range?.addEventListener('input', () => setPos(parseFloat(range.value)));
+</script>

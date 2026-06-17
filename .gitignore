@@ -17,3 +17,6 @@ npm-debug.log*
 # os
 .DS_Store
 Thumbs.db
+
+# original client source photos (heavy) — optimized copies live in public/images/real-*.jpg
+public/images/cliente 1/
