@@ -39,7 +39,7 @@ const labelCls = 'mb-1.5 block text-sm font-medium text-ink';
 
       <!-- Right: form -->
       <div class="reveal rounded-2xl border border-white/10 bg-surface p-6 md:p-8">
-        <form id="bookingForm" method="POST" action="/api/book" class="grid gap-5 sm:grid-cols-2">
+        <form id="bookingForm" method="POST" action="/api/book" data-wa={site.whatsapp} class="grid gap-5 sm:grid-cols-2">
           <!-- Honeypot (hidden from humans) -->
           <div class="hidden" aria-hidden="true">
             <label>Company<input type="text" name="company" tabindex="-1" autocomplete="off" /></label>
@@ -111,40 +111,50 @@ const labelCls = 'mb-1.5 block text-sm font-medium text-ink';
 </section>
 
 <script>
-  // Progressive enhancement: validate + submit via fetch for inline errors.
-  // Falls back to a normal POST if JS is disabled.
+  // On submit: send the request to WhatsApp pre-filled (works anywhere, no
+  // backend needed) AND fire a best-effort POST so email/DB get it too when
+  // configured. Falls back to a normal POST if JS is disabled.
   const form = document.getElementById('bookingForm') as HTMLFormElement | null;
-  const errEl = document.getElementById('formError');
   const btn = document.getElementById('bookSubmit') as HTMLButtonElement | null;
 
-  form?.addEventListener('submit', async (e) => {
+  function field(name: string): string {
+    const el = form?.elements.namedItem(name) as HTMLInputElement | null;
+    return (el?.value || '').trim();
+  }
+
+  form?.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
     }
-    errEl?.classList.add('hidden');
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Sending…';
+      btn.textContent = 'Opening WhatsApp…';
     }
+
+    // Build the WhatsApp message from the form fields.
+    const lines = [
+      'Hello Sena Premium! I would like to book a detail:',
+      `Name: ${field('name')}`,
+      `Phone: ${field('phone')}`,
+      field('vehicle') && `Vehicle: ${field('vehicle')}`,
+      field('service') && `Service: ${field('service')}`,
+      field('preferred') && `Preferred: ${field('preferred')}`,
+      field('address') && `Address: ${field('address')}`,
+      field('notes') && `Notes: ${field('notes')}`,
+    ].filter(Boolean);
+    const wa = form.dataset.wa;
+    const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(lines.join('\n'))}`;
+
+    // Best-effort: also notify owner by email / store in DB (when available).
     try {
-      const res = await fetch('/api/book', { method: 'POST', body: new FormData(form) });
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
-      }
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data?.errors?.length ? 'Please check the highlighted fields.' : 'Something went wrong.');
-    } catch (err) {
-      if (errEl) {
-        errEl.textContent = (err as Error).message + ' You can also reach us on WhatsApp.';
-        errEl.classList.remove('hidden');
-      }
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = 'Request My Appointment';
-      }
+      fetch('/api/book', { method: 'POST', body: new FormData(form), keepalive: true });
+    } catch {
+      /* ignore — WhatsApp is the guaranteed delivery path */
     }
+
+    // Hand off to WhatsApp with everything pre-filled.
+    window.location.href = waUrl;
   });
 </script>

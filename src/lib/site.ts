@@ -10,7 +10,7 @@ export const site = {
   region: 'TX',
   regionName: 'Texas',
   zip: '75078',
-  url: 'https://senapremiumdetailing.com',
+  url: 'https://senadetailing.vercel.app',
   phoneDisplay: '(214) 656-0656',
   phoneHref: '+12146560656',
   whatsapp: '12146560656', // international, no + or spaces

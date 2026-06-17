@@ -1,5 +1,5 @@
 ---
-import { getBookings, updateBookingStatus } from '../../lib/db';
+import { getBookings, updateBookingStatus, dbAvailable } from '../../lib/db';
 import { site } from '../../lib/site';
 
 export const prerender = false;
@@ -30,12 +30,13 @@ if (Astro.request.method === 'POST') {
   const id = Number(form.get('id'));
   const status = String(form.get('status') || '');
   if (id && status) {
-    updateBookingStatus(id, status);
+    await updateBookingStatus(id, status);
     return Astro.redirect('/admin', 303);
   }
 }
 
-const bookings = getBookings();
+const hasDb = await dbAvailable();
+const bookings = await getBookings();
 const statusColors: Record<string, string> = {
   new: 'bg-gold-gradient text-bg',
   contacted: 'bg-blue-500/20 text-blue-300',
@@ -81,7 +82,14 @@ function waHref(phone: string) {
       <h1>Bookings</h1>
       <p class="sub">{site.name} · {bookings.length} total request{bookings.length === 1 ? '' : 's'}</p>
 
-      {bookings.length === 0 && <p class="empty">No booking requests yet.</p>}
+      {!hasDb && (
+        <p class="empty">
+          Local database isn't available on this host (serverless).<br />
+          Booking requests arrive via WhatsApp and email instead.<br />
+          To keep history here, run the site on a persistent Node server.
+        </p>
+      )}
+      {hasDb && bookings.length === 0 && <p class="empty">No booking requests yet.</p>}
 
       {bookings.map((b) => (
         <div class="card">

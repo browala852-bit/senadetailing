@@ -1,37 +1,52 @@
 // Local SQLite store for booking requests — uses Node's built-in SQLite
 // (node:sqlite, Node 22+). No native compilation, no external service.
-// File lives in ./data/bookings.db (gitignored). Works locally and on any
-// persistent Node host. On serverless hosts the file is ephemeral — that's
-// why every booking is also delivered via WhatsApp / email.
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+//
+// Best-effort by design: on a persistent Node host the file ./data/bookings.db
+// is created and bookings + /admin work fully. On serverless hosts (Vercel) the
+// filesystem is read-only/ephemeral, so getDb() fails gracefully and every
+// function here becomes a no-op — bookings are still delivered via WhatsApp/email.
 
-let db: DatabaseSync | null = null;
+let db: any = null;
+let tried = false;
 
-function getDb(): DatabaseSync {
-  if (db) return db;
-  const dir = join(process.cwd(), 'data');
-  mkdirSync(dir, { recursive: true });
-  db = new DatabaseSync(join(dir, 'bookings.db'));
-  db.exec('PRAGMA journal_mode = WAL;');
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS bookings (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      created_at  TEXT NOT NULL,
-      name        TEXT NOT NULL,
-      phone       TEXT NOT NULL,
-      email       TEXT,
-      vehicle     TEXT,
-      service     TEXT,
-      preferred   TEXT,
-      address     TEXT,
-      notes       TEXT,
-      consent     INTEGER NOT NULL DEFAULT 0,
-      status      TEXT NOT NULL DEFAULT 'new'
-    );
-  `);
+async function getDb(): Promise<any> {
+  if (tried) return db;
+  tried = true;
+  try {
+    const { DatabaseSync } = await import('node:sqlite');
+    const { mkdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const dir = join(process.cwd(), 'data');
+    mkdirSync(dir, { recursive: true });
+    const handle = new DatabaseSync(join(dir, 'bookings.db'));
+    handle.exec('PRAGMA journal_mode = WAL;');
+    handle.exec(`
+      CREATE TABLE IF NOT EXISTS bookings (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at  TEXT NOT NULL,
+        name        TEXT NOT NULL,
+        phone       TEXT NOT NULL,
+        email       TEXT,
+        vehicle     TEXT,
+        service     TEXT,
+        preferred   TEXT,
+        address     TEXT,
+        notes       TEXT,
+        consent     INTEGER NOT NULL DEFAULT 0,
+        status      TEXT NOT NULL DEFAULT 'new'
+      );
+    `);
+    db = handle;
+  } catch {
+    // SQLite unavailable on this host (e.g. serverless) — disable persistence.
+    db = null;
+  }
   return db;
+}
+
+/** True when a persistent local DB is available (i.e. not serverless). */
+export async function dbAvailable(): Promise<boolean> {
+  return (await getDb()) !== null;
 }
 
 export interface BookingInput {
@@ -52,8 +67,11 @@ export interface BookingRow extends BookingInput {
   status: string;
 }
 
-export function insertBooking(b: BookingInput): number {
-  const stmt = getDb().prepare(`
+/** Returns the new row id, or null if persistence is unavailable. */
+export async function insertBooking(b: BookingInput): Promise<number | null> {
+  const d = await getDb();
+  if (!d) return null;
+  const stmt = d.prepare(`
     INSERT INTO bookings
       (created_at, name, phone, email, vehicle, service, preferred, address, notes, consent)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -73,12 +91,14 @@ export function insertBooking(b: BookingInput): number {
   return Number(info.lastInsertRowid);
 }
 
-export function getBookings(): BookingRow[] {
-  return getDb()
-    .prepare('SELECT * FROM bookings ORDER BY created_at DESC')
-    .all() as unknown as BookingRow[];
+export async function getBookings(): Promise<BookingRow[]> {
+  const d = await getDb();
+  if (!d) return [];
+  return d.prepare('SELECT * FROM bookings ORDER BY created_at DESC').all() as BookingRow[];
 }
 
-export function updateBookingStatus(id: number, status: string): void {
-  getDb().prepare('UPDATE bookings SET status = ? WHERE id = ?').run(status, id);
+export async function updateBookingStatus(id: number, status: string): Promise<void> {
+  const d = await getDb();
+  if (!d) return;
+  d.prepare('UPDATE bookings SET status = ? WHERE id = ?').run(status, id);
 }

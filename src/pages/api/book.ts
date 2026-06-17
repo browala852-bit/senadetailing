@@ -41,15 +41,19 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     );
   }
 
+  // Best-effort persistence + email. Neither is required for the booking to
+  // succeed (the front-end also routes the request to WhatsApp), so failures
+  // here (e.g. no DB on serverless) must not break the submission.
+  let id: number | null = null;
   try {
-    const id = insertBooking(booking);
-    await notifyOwner(booking, id);
+    id = await insertBooking(booking);
   } catch (err) {
-    console.error('Booking save failed:', err);
-    return new Response(
-      JSON.stringify({ ok: false, errors: ['server'] }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    console.error('Booking save skipped:', err);
+  }
+  try {
+    await notifyOwner(booking, id ?? 0);
+  } catch (err) {
+    console.error('Booking email skipped:', err);
   }
 
   return redirect('/thank-you', 303);
