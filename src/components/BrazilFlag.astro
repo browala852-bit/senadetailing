@@ -1,0 +1,23 @@
+---
+// Brazilian flag — simplified SVG mark (no emoji), for the bilingual badge.
+interface Props {
+  class?: string;
+  size?: number;
+}
+const { class: className = '', size = 20 } = Astro.props;
+const w = size;
+const h = Math.round(size * 0.7);
+---
+<svg
+  width={w}
+  height={h}
+  viewBox="0 0 70 49"
+  xmlns="http://www.w3.org/2000/svg"
+  class={className}
+  role="img"
+  aria-label="Brazil"
+>
+  <rect width="70" height="49" rx="5" fill="#009C3B" />
+  <polygon points="35,5 64,24.5 35,44 6,24.5" fill="#FFDF00" />
+  <circle cx="35" cy="24.5" r="11" fill="#002776" />
+</svg>

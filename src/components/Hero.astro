@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import BrazilFlag from './BrazilFlag.astro';
 import { site, areaLabel } from '../lib/site';
 ---
 <section class="relative isolate flex min-h-[100svh] items-center overflow-hidden">
@@ -51,7 +52,12 @@ import { site, areaLabel } from '../lib/site';
         </a>
       </div>
 
-      <p class="mt-8 text-sm text-muted">
+      <div class="mt-8 inline-flex items-center gap-2.5 rounded-full border border-[var(--color-gold)]/25 bg-surface/60 px-4 py-2 backdrop-blur-sm">
+        <BrazilFlag size={20} />
+        <span class="text-sm font-medium text-ink">Brazilian-Owned · <span class="text-gold">Falamos Português</span></span>
+      </div>
+
+      <p class="mt-6 text-sm text-muted">
         Serving {areaLabel}
       </p>
     </div>

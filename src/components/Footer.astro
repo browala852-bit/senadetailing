@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import BrazilFlag from './BrazilFlag.astro';
 import { site, serviceAreas, areaLabel } from '../lib/site';
 const year = new Date().getFullYear();
 ---
@@ -15,6 +16,9 @@ const year = new Date().getFullYear();
         <a href={site.instagramUrl} target="_blank" rel="noopener" class="mt-5 inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-gold">
           <Icon name="instagram" size={18} /> @{site.instagram}
         </a>
+        <p class="mt-4 flex items-center gap-2 text-sm text-muted">
+          <BrazilFlag size={18} /> Brazilian-owned · Falamos Português
+        </p>
       </div>
 
       <div>
